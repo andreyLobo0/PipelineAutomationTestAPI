@@ -1,0 +1,57 @@
+name: API Integration Tests
+
+on:
+  repository_dispatch:
+    types: 
+      - micro-1-deploy-completed
+      - micro-2-deploy-completed
+      - micro-3-deploy-completed
+
+jobs:
+  track-deployments:
+    runs-on: ubuntu-latest
+    outputs:
+      all_completed: ${{ steps.check-deployments.outputs.all_completed }}
+    
+    steps:
+      - name: Get deployment status
+        id: check-deployments
+        run: |
+          # Criar ou atualizar arquivo de status
+          mkdir -p /tmp/deployment-status
+          echo "${{ github.event.client_payload.service }}" >> /tmp/deployment-status/completed.txt
+          
+          # Verificar se todos os serviços completaram
+          COMPLETED_COUNT=$(cat /tmp/deployment-status/completed.txt | sort | uniq | wc -l)
+          REQUIRED_SERVICES=3  # Número total de microsserviços
+          
+          if [ $COMPLETED_COUNT -eq $REQUIRED_SERVICES ]; then
+            echo "all_completed=true" >> $GITHUB_OUTPUT
+          else
+            echo "all_completed=false" >> $GITHUB_OUTPUT
+          fi
+
+  run-api-tests:
+    needs: track-deployments
+    if: needs.track-deployments.outputs.all_completed == 'true'
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Run actions/checkout
+        uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          
+      - name: Install dependencies
+        run: npm install
+        
+      - name: Wait for deployments to stabilize
+        run: |
+          echo "Aguardando 30 segundos para garantir que todos os deploys estejam estáveis..."
+          sleep 30
+          
+      - name: Run API Tests
+        run: echo "npm run test:api"
