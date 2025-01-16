@@ -3,9 +3,9 @@ name: API Integration Tests
 on:
   repository_dispatch:
     types: 
-      - micro-a-deploy-completed
-      - micro-b-deploy-completed
-      - micro-c-deploy-completed
+      - micro-1-deploy-completed
+      - micro-2-deploy-completed
+      - micro-3-deploy-completed
 
 jobs:
   track-deployments:
