@@ -3,7 +3,7 @@ name: API Integration Tests
 on:
   repository_dispatch:
     types: [ micro-1-deploy-completed, micro-2-deploy-completed, micro-3-deploy-completed ]
-    
+
 jobs:
   track-deployments:
     runs-on: ubuntu-latest
@@ -20,7 +20,7 @@ jobs:
           
           # Verificar se todos os serviços completaram
           COMPLETED_COUNT=$(cat /tmp/deployment-status/completed.txt | sort | uniq | wc -l)
-          REQUIRED_SERVICES=1  # Número total de microsserviços
+          REQUIRED_SERVICES=3 # Número total de microsserviços
           cat /tmp/deployment-status/completed.txt
           if [ $COMPLETED_COUNT -eq $REQUIRED_SERVICES ]; then
             echo "all_completed=true" >> $GITHUB_OUTPUT
