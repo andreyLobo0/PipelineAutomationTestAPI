@@ -22,23 +22,33 @@ jobs:
           SERVICE_NAME="${{ github.event.client_payload.service }}"
           echo "${SERVICE_NAME}" > "/tmp/deployment-status/${SERVICE_NAME}.txt"
           
+          # Listar arquivos para debug
+          echo "Current deployments:"
+          ls -l /tmp/deployment-status/
+          
           # Lista de todos os serviços necessários
           REQUIRED_SERVICES=("microservice-1" "microservice-2" "microservice-3")
           
           # Verificar se todos os serviços têm arquivo de status
           ALL_COMPLETED=true
+          MISSING_SERVICES=""
           for service in "${REQUIRED_SERVICES[@]}"; do
             if [ ! -f "/tmp/deployment-status/${service}.txt" ]; then
               ALL_COMPLETED=false
-              break
+              MISSING_SERVICES="${MISSING_SERVICES} ${service}"
             fi
           done
-          ls /tmp/deployment-status
+          
+          # Log para debug
+          echo "Missing services:${MISSING_SERVICES}"
+          
           # Definir output
           if [ "$ALL_COMPLETED" = true ]; then
             echo "all_completed=true" >> $GITHUB_OUTPUT
+            echo "All services deployed successfully!"
           else
             echo "all_completed=false" >> $GITHUB_OUTPUT
+            echo "Waiting for:${MISSING_SERVICES}"
           fi
   run-api-tests:
     needs: track-deployments
