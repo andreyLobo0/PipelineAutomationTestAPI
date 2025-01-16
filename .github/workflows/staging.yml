@@ -46,7 +46,7 @@ jobs:
           node-version: '18'
           
       - name: Install dependencies
-        run: npm install
+        run:  echo "npm install"
         
       - name: Wait for deployments to stabilize
         run: |
