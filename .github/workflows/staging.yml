@@ -23,7 +23,7 @@ jobs:
           
           # Verificar se todos os serviços completaram
           COMPLETED_COUNT=$(cat /tmp/deployment-status/completed.txt | sort | uniq | wc -l)
-          REQUIRED_SERVICES=3  # Número total de microsserviços
+          REQUIRED_SERVICES=1  # Número total de microsserviços
           
           if [ $COMPLETED_COUNT -eq $REQUIRED_SERVICES ]; then
             echo "all_completed=true" >> $GITHUB_OUTPUT
