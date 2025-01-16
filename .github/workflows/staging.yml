@@ -35,7 +35,7 @@ jobs:
               break
             fi
           done
-          cat /tmp/deployment-status
+          ls /tmp/deployment-status
           # Definir output
           if [ "$ALL_COMPLETED" = true ]; then
             echo "all_completed=true" >> $GITHUB_OUTPUT
