@@ -12,44 +12,56 @@ jobs:
       all_completed: ${{ steps.check-deployments.outputs.all_completed }}
     
     steps:
+      - name: Download previous deployment status
+        uses: actions/cache@v3
+        with:
+          path: deployment-status
+          key: ${{ runner.os }}-deployment-status
+          restore-keys: |
+            ${{ runner.os }}-deployment-status
+
       - name: Get deployment status
         id: check-deployments
         run: |
-          # Criar diretório de status se não existir
-          mkdir -p /tmp/deployment-status
+          # Criar diretório se não existir
+          mkdir -p deployment-status
           
           # Registrar deploy atual
           SERVICE_NAME="${{ github.event.client_payload.service }}"
-          echo "${SERVICE_NAME}" > "/tmp/deployment-status/${SERVICE_NAME}.txt"
+          echo "Registering deployment for ${SERVICE_NAME}"
+          touch "deployment-status/${SERVICE_NAME}.txt"
           
           # Listar arquivos para debug
           echo "Current deployments:"
-          ls -l /tmp/deployment-status/
+          ls -la deployment-status/
           
-          # Lista de todos os serviços necessários
+          # Verificar status de todos os serviços
           REQUIRED_SERVICES=("microservice-1" "microservice-2" "microservice-3")
-          
-          # Verificar se todos os serviços têm arquivo de status
           ALL_COMPLETED=true
           MISSING_SERVICES=""
+          
           for service in "${REQUIRED_SERVICES[@]}"; do
-            if [ ! -f "/tmp/deployment-status/${service}.txt" ]; then
+            if [ ! -f "deployment-status/${service}.txt" ]; then
               ALL_COMPLETED=false
               MISSING_SERVICES="${MISSING_SERVICES} ${service}"
             fi
           done
           
           # Log para debug
+          echo "Deployments found: $(ls deployment-status/ | tr '\n' ' ')"
           echo "Missing services:${MISSING_SERVICES}"
           
           # Definir output
           if [ "$ALL_COMPLETED" = true ]; then
             echo "all_completed=true" >> $GITHUB_OUTPUT
             echo "All services deployed successfully!"
+            # Limpar status quando todos completarem
+            rm -rf deployment-status/*
           else
             echo "all_completed=false" >> $GITHUB_OUTPUT
             echo "Waiting for:${MISSING_SERVICES}"
           fi
+
   run-api-tests:
     needs: track-deployments
     if: needs.track-deployments.outputs.all_completed == 'true'
@@ -74,3 +86,8 @@ jobs:
           
       - name: Run API Tests
         run: echo "npm run test:api"
+      
+      - name: Clear cache on failure
+        if: failure()
+        run: |
+          rm -rf deployment-status/*
