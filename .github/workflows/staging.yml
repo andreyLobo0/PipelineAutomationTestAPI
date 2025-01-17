@@ -12,13 +12,18 @@ jobs:
       all_completed: ${{ steps.check-deployments.outputs.all_completed }}
     
     steps:
+      - name: Generate unique cache key
+        id: cache-key
+        run: |
+          echo "cache_key=$(date +%s)" >> $GITHUB_OUTPUT
+
       - name: Download previous deployment status
         uses: actions/cache@v3
         with:
           path: deployment-status
-          key: ${{ runner.os }}-deployment-status
+          key: ${{ runner.os }}-deployment-status-${{ steps.cache-key.outputs.cache_key }}
           restore-keys: |
-            ${{ runner.os }}-deployment-status
+            ${{ runner.os }}-deployment-status-
 
       - name: Get deployment status
         id: check-deployments
